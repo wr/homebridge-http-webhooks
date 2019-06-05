@@ -536,6 +536,14 @@ function HttpWebHookSensorAccessory(log, sensorConfig, storage) {
     }).bind(this);
     this.service.getCharacteristic(Characteristic.CurrentAmbientLightLevel).on('get', this.getState.bind(this));
   }
+  else if (this.type === "leak") {
+    this.service = new Service.LeakSensor(this.name);
+    this.changeHandler = (function(newState) {
+      this.log("Change HomeKit state for leak sensor to '%s'.", newState);
+      this.service.getCharacteristic(Characteristic.LeakSensorState).updateValue(newState ? Characteristic.LeakSensorState.LEAK_DETECTED : Characteristic.LeakSensorState.LEAK_NOT_DETECTED, undefined, CONTEXT_FROM_WEBHOOK);
+    }).bind(this);
+    this.service.getCharacteristic(Characteristic.LeakSensorState).on('get', this.getState.bind(this));
+  }
 
 }
 
@@ -557,6 +565,9 @@ HttpWebHookSensorAccessory.prototype.getState = function(callback) {
   }
   else if (this.type === "light") {
     callback(null, parseFloat(state));
+  }
+  else if (this.type === "leak") {
+    callback(null, state ? Characteristic.LeakSensorState.LEAK_DETECTED : Characteristic.LeakSensorState.LEAK_NOT_DETECTED);
   }
   else {
     callback(null, state);
